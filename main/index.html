@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>DOZER</title>
+</head>
+
+<body>
+<p id="gamepad-info">Waiting...</p>
+<p>
+<img id="cam" width="640" height="480" src="" />
+</p>
+
+<p id="a0"></p>
+<p id="a1"></p>
+<p id="a2"></p>
+<p id="a3"></p>
+<p id="a4"></p>
+<p id="a5"></p>
+<p id="a6"></p>
+<p id="a7"></p>
+
+</body>
+
+<script>
+var ws = new WebSocket('ws://192.168.13.142/ws');
+ws.addEventListener("open", function(evt)
+	{
+		console.log(evt);
+	});
+
+ws.addEventListener("message", function(evt)
+	{
+		console.debug(evt);
+		cam.src = window.URL.createObjectURL(evt.data);
+  		requestAnimationFrame(update);
+	});
+
+var gamepadInfo = document.getElementById("gamepad-info");
+var gp = undefined;
+var cam = document.getElementById("cam");
+
+window.addEventListener("gamepadconnected", function() 
+{
+  gp = navigator.getGamepads()[0];
+  gamepadInfo.innerHTML = "Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.buttons.length + " buttons and " + gp.axes.length + " axes.";
+
+  console.debug(gp);
+  var a = Float32Array.from(gp.axes);
+  ws.send(a);
+});
+
+window.addEventListener("gamepaddisconnected", function() {
+  gamepadInfo.innerHTML = "Waiting for gamepad.";
+  delete gp;
+});
+
+function update()
+{
+	if (!gp) return;
+
+	for (var i=0; i<8; i++)
+	{
+		document.getElementById("a" + i).innerHTML = "Axis " + i + ":" + gp.axes[i].toFixed(2);
+	}
+  	var a = Float32Array.from(gp.axes);
+  	ws.send(a);
+	//requestAnimationFrame(update);
+}
+
+</script>
+</html>
